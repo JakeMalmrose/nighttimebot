@@ -41,8 +41,17 @@ class PermissionBot(commands.Bot):
         self.setup_database()
         
     async def setup_hook(self):
+        """Called when the bot is first setting up"""
         # Load extensions/cogs here
         await self.load_extension('cogs.permission_manager')
+        logger.info("Permission manager cog loaded")
+        
+        # Sync commands with Discord
+        try:
+            synced = await self.tree.sync()
+            logger.info(f"Synced {len(synced)} command(s)")
+        except Exception as e:
+            logger.error(f"Failed to sync commands: {e}")
         
     def setup_database(self):
         """Initialize SQLite database with required tables"""
@@ -67,6 +76,13 @@ class PermissionBot(commands.Bot):
     async def on_ready(self):
         logger.info(f'Bot is ready! Logged in as {self.user.name} ({self.user.id})')
         self.scheduler.start()
+        
+        # Additional sync attempt on ready, just in case
+        try:
+            synced = await self.tree.sync()
+            logger.info(f"Synced {len(synced)} command(s) after ready")
+        except Exception as e:
+            logger.error(f"Failed to sync commands after ready: {e}")
 
 async def main():
     # Load config
